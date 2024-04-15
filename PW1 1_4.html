@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Cubeman</title>
+    <style>
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        #c {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    </style>
+</head>
+
+
+<body>
+    <canvas id="c"></canvas>
+</body>
+<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.148.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.148.0/examples/jsm/"
+    }
+  }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+    import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+    import { VRButton } from 'three/addons/webxr/VRButton.js';
+    import { ARButton } from "three/addons/webxr/ARButton.js";
+    import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
+
+    function main() {
+        const canvas = document.querySelector('#c');
+        const renderer = new THREE.WebGLRenderer({ canvas });
+        document.body.appendChild(renderer.domElement);
+        document.body.appendChild(VRButton.createButton(renderer));
+        renderer.xr.enabled = true;
+        renderer.xr.cameraAutoUpdate = false;
+
+        const fov = 75;
+        const aspect = 1;  // the canvas default
+        const near = 0.1;
+        const far = 1000;
+        const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+        // controls
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+
+        controls.listenToKeyEvents(window); // optional
+
+        controls.enableDamping = false; // an animation loop is required when either damping or auto-rotation are enabled
+        controls.dampingFactor = 0.05;
+
+        controls.screenSpacePanning = false;
+
+        controls.minDistance = 30;
+        controls.maxDistance = 500;
+        camera.position.x = 10;
+        camera.position.y = 100;
+        camera.position.z = 0;
+
+        controls.update();
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x222222)
+
+
+
+
+        {
+            const color = 0xFFFFFF;
+            const intensity = 1;
+            const light = new THREE.DirectionalLight(color, intensity);
+            light.position.set(-1, 2, 4);
+            scene.add(light);
+        }
+
+        const objects = [];
+
+
+        function createMaterial() {
+            const material = new THREE.MeshPhongMaterial({
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 1
+            });
+
+            const hue = 123;
+            const saturation = 1;
+            const luminance = .5;
+            material.color.setHSL(hue, saturation, luminance);
+            material.color.setHex(0xffcc00);
+
+            return material;
+        }
+        function adder(w, h, d, x, y, z, parent, op) {
+            const geometry = new THREE.BoxGeometry(w, h, d);
+            const mesh = new THREE.Mesh(geometry, createMaterial());
+            mesh.material.opacity = op
+            mesh.position.x = x;
+            mesh.position.y = y;
+            mesh.position.z = z;
+            parent.add(mesh)
+            return mesh
+        }
+        const body = new THREE.Object3D();
+        scene.add(body)
+        objects.push(body);
+
+        const face_mesh = adder(4, 2, 4, 0, 50, -9, body, 1)
+
+        const shoulder = new THREE.Object3D();
+        body.add(shoulder);
+        objects.push(shoulder);
+        //chest
+
+        const chest_mesh = adder(6, 2, 5, 0, 50, -3, body, 1)
+
+        //torso
+
+        const torso_mesh = adder(4, 2, 6, 0, 50, 2.75, body, 1)
+
+        const waist_mesh = adder(5, 2, 2, 0, 50, 7.5, body, 1)
+
+        const rwaistjoint_mesh = adder(0.5, 0.5, 1, 1, 0, 1, waist_mesh, 0)
+
+        //waist joint left
+
+        const lwaistjoint_mesh = adder(0.5, 0.5, 1, -1, 0, 1, waist_mesh, 0)
+        // left femur
+
+        const lfemur_mesh = adder(1.5, 2.5, 6, 0, 0, 3.5, lwaistjoint_mesh, 1)
+
+        // right femur
+        const rfemur_mesh = adder(1.5, 2.5, 6, 0, 0, 3.5, rwaistjoint_mesh, 1)
+        //knee joint right 
+        const rkneejoint_mesh = adder(0.5, 0.5, 1, 0, 0, 3, rfemur_mesh, 0)
+        //knee joint left
+        const lkneejoint_mesh = adder(0.5, 0.5, 1, 0, 0, 3, lfemur_mesh, 0)
+        // left tibia
+
+        const ltibia_mesh = adder(1.5, 2, 6, 0, 0, 3.5, lkneejoint_mesh, 1)
+        // right tibia
+        const rtibia_mesh = adder(1.5, 2, 6, 0, 0, 3.5, rkneejoint_mesh, 1)
+        //anklejointright
+        const rankle_mesh = adder(0.5, 0.5, 1, 0, 0, 3, rtibia_mesh, 0)
+        //anklejointleft
+        const lankle_mesh = adder(0.5, 0.5, 1, 0, 0, 3, ltibia_mesh, 0)
+
+        //left foot
+
+        const lfoot_mesh = adder(1.5, 3, 1, 0, 0, 1, lankle_mesh, 1)
+
+        //right foot
+
+        const rfoot_mesh = adder(1.5, 3, 1, 0, 0, 1, rankle_mesh, 1)
+        // left humerus
+
+        const lhandup_mesh = adder(1.5, 2, 6, -5.5, 50, -2.5, body, 1)
+        //elbowjointleft
+        const elbowjointleft_mesh = adder(0.5, 0.5, 1, 0, 0, 3.25, lhandup_mesh, 0)
+
+        //left radius
+
+        const lhanddown_mesh = adder(1.5, 2, 6, 0, 0, 3.25, elbowjointleft_mesh, 1)
+        // right humerus
+        const rhandup_mesh = adder(1.5, 2, 6, 5.5, 50, -2.5, body, 1)
+
+        //elbowjointright
+        const elbowjointright_mesh = adder(0.5, 0.5, 1, 0, 0, 3.25, rhandup_mesh, 0)
+
+        // right radius
+        const rhanddown_mesh = adder(1.5, 2, 6, 0, 0, 3.25, elbowjointright_mesh, 1)
+        //wristjointright
+        const wristjointright_mesh = adder(0.5, 0.5, 1, 0, 0, 3.25, rhanddown_mesh, 0)
+        //wristjointleft
+        const wristjointleft_mesh = adder(0.5, 0.5, 1, 0, 0, 3.25, lhanddown_mesh, 0)
+        // left wrist
+
+        const lwrist_mesh = adder(1.5, 3, 1, 0, 0, 0.5, wristjointleft_mesh, 1);
+
+        // right wrist
+        const rwrist_mesh = adder(1.5, 3, 1, 0, 0, 0.5, wristjointright_mesh, 1);
+
+
+        function resizeRendererToDisplaySize(renderer) {
+            const canvas = renderer.domElement;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            const needResize = canvas.width !== width || canvas.height !== height;
+            if (needResize) {
+                renderer.setSize(width, height, false);
+            }
+            return needResize;
+        }
+
+        function render(time) {
+            body.rotation.y = Math.PI / 2
+            time *= 0.002;
+            // body.rotation.x = Math.PI/2
+
+            if (resizeRendererToDisplaySize(renderer)) {
+                const canvas = renderer.domElement;
+                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                camera.updateProjectionMatrix();
+            }
+
+            var theta = Math.sin(1.57 * time);
+            var move = Math.sin(0.785 * time)
+            var rat = 0.1 * theta;
+            {
+                rfemur_mesh.rotation.x = 5 * rat;
+                rkneejoint_mesh.rotation.x = -5 * rat;
+                lfemur_mesh.rotation.x = -5 * rat;
+                lkneejoint_mesh.rotation.x = 5 * rat;
+                rhandup_mesh.rotation.x = -5 * rat;
+                rhanddown_mesh.rotation.x = 5 * rat;
+                lhandup_mesh.rotation.x = 5 * rat;
+                lhanddown_mesh.rotation.x = -5 * rat;
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+            renderer.xr.updateCamera( camera );
+
+            requestAnimationFrame(render);
+        }
+        renderer.setAnimationLoop(function () {
+
+            renderer.render(scene, camera);
+
+        });
+
+        requestAnimationFrame(render);
+    }
+
+
+    main();
+</script>
+
+</html>
