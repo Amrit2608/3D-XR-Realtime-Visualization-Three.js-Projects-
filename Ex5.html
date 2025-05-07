@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Three.js - Ex-5</title>
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        #c {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="c"></canvas>
+</body>
+<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.148.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.148.0/examples/jsm/"
+    }
+  }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+    import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+    import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+    import { RectAreaLightHelper } from 'three/addons/helpers/RectAreaLightHelper.js';
+    import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
+
+    function main() {
+        const canvas = document.querySelector('#c');
+        const renderer = new THREE.WebGLRenderer({ canvas });
+
+        const fov = 40;
+        const aspect = 2;  // the canvas default
+        const near = 0.1;
+        const far = 1000;
+        const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+        camera.position.z = 120;
+        const controls = new OrbitControls(camera, renderer.domElement);
+
+        controls.listenToKeyEvents(window); // optional
+
+        controls.enableDamping = false; // an animation loop is required when either damping or auto-rotation are enabled
+        controls.dampingFactor = 0.05;
+
+        controls.screenSpacePanning = false;
+
+        controls.minDistance = 1;
+        controls.maxDistance = 5000;
+
+
+        camera.position.z = 0;
+        camera.position.x = 50;
+        camera.position.y = 10;
+
+        controls.update();
+
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xaaaaaa);
+        // lights
+
+
+        const color1 = 0xFFFFFF;
+        const intensity1 = 0;
+        const light1 = new THREE.AmbientLight(color1, intensity1);
+        light1.position.set(0, 4.5, 0);
+        scene.add(light1);
+
+
+
+        const color2 = 0xFFFFFF;
+        const intensity2 = 1;
+        const light2 = new THREE.PointLight(color2, intensity2);
+        light2.position.set(0, 4.5, 0);
+        scene.add(light2);
+
+
+        const width = 7;
+        const height = 5.25;
+        const intensity = 1;
+        const rectLightg = new THREE.RectAreaLight(0x00ff00, intensity, width, height);
+        const rectLightw = new THREE.RectAreaLight(0xffffff, intensity, width, height);
+        const rectLightr = new THREE.RectAreaLight(0xff0000, intensity, width, height);
+        rectLightr.position.set(0, -2.375, 4);
+        rectLightg.position.set(0, -2.375, -4);
+        rectLightw.position.set(-4, -2.375, 0);
+        rectLightg.rotation.x = Math.PI
+        rectLightw.rotation.y = Math.PI / 2;
+        scene.add(rectLightr);
+        scene.add(rectLightg);
+        scene.add(rectLightw);
+
+
+
+
+        // function to create 4 sidepillars
+        function createpillars(Color, x, y, z) {
+            const loader = new THREE.TextureLoader();
+            const texture = loader.load('Tex.jpeg');
+            const width = 1;
+            const height = 10;
+            const depth = 1;
+            const geometry = new THREE.BoxGeometry(width, height, depth);
+            const material = new THREE.MeshLambertMaterial({
+                side: THREE.DoubleSide,
+                map: texture,
+            });
+            material.color.setHex(Color)
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.x = x;
+            mesh.position.y = y;
+            mesh.position.z = z;
+            // mesh.rotation.z = Math.PI/2
+            scene.add(mesh);
+        }
+        // function to create 2 side green panels
+        function createsidepannels(Color, x, y, z) {
+            const width = 7;
+            const height = 1.75;
+            const depth = 0.1;
+            const geometry = new THREE.PlaneGeometry(width, height);
+            const material = new THREE.MeshLambertMaterial({
+                side: THREE.DoubleSide,
+            });
+            material.color.setHex(Color)
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.x = x;
+            mesh.position.y = y;
+            mesh.position.z = z;
+            scene.add(mesh);
+        }
+        // function to create 2 side green panels but rotated
+        function createsidepannelsrot(Color, x, y, z) {
+            const width = 7;
+            const height = 1.75;
+            const depth = 0.1;
+            const geometry = new THREE.PlaneGeometry(width, height);
+            const material = new THREE.MeshLambertMaterial({
+                side: THREE.DoubleSide,
+            });
+            material.color.setHex(Color)
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.x = x;
+            mesh.position.y = y;
+            mesh.position.z = z;
+            mesh.rotation.y = Math.PI / 2;
+            scene.add(mesh);
+        }
+        // function to create bars around the panels
+        function createsidebars(Color, x, y, z) {
+            const loader = new THREE.TextureLoader();
+            const texture = loader.load('Tex.jpeg');
+            texture.rotation = 1.57;
+            const width = 7;
+            const height = 1;
+            const depth = 1;
+            const geometry = new THREE.PlaneGeometry(width, depth);
+            const material = new THREE.MeshLambertMaterial({
+                side: THREE.DoubleSide,
+                map: texture,
+            });
+            material.color.setHex(Color)
+            const mesh = new THREE.Mesh(geometry, material);
+            const mesh2 = new THREE.Mesh(geometry, material);
+            mesh.rotation.y = Math.PI / 2;
+            mesh2.rotation.y = Math.PI / 2;
+            const mesha = mesh.clone();
+            const meshb = mesh2.clone();
+
+            mesh.position.x = x;
+            mesh.position.y = y;
+            mesh.position.z = z;
+            mesh2.position.x = x - 8;
+            mesh2.position.y = y;
+            mesh2.position.z = z;
+            mesha.position.x = x;
+            mesha.position.y = y / 2 - 0.5;
+            meshb.position.x = x - 8;
+            meshb.position.y = y / 2 - 0.5;
+
+            scene.add(mesh2);
+            scene.add(mesh);
+            scene.add(meshb);
+            scene.add(mesha);
+        }
+        // function to create bars around the rotated panels
+        function createsidebarsrot(Color, x, y, z) {
+            const loader = new THREE.TextureLoader();
+            const texture = loader.load('Tex.jpeg');
+            texture.rotation = 1.57;
+            const width = 7;
+            const height = 1;
+            const depth = 1;
+            const geometry = new THREE.PlaneGeometry(width, depth);
+            const material = new THREE.MeshLambertMaterial({
+                side: THREE.DoubleSide,
+                map: texture,
+            });
+            material.color.setHex(Color)
+            const mesh = new THREE.Mesh(geometry, material);
+            const mesh2 = new THREE.Mesh(geometry, material);
+            const mesha = mesh.clone();
+            const meshb = mesh2.clone();
+            mesh.position.x = x;
+            mesh.position.y = y;
+            mesh.position.z = z;
+            mesh2.position.x = x;
+            mesh2.position.y = y;
+            mesh2.position.z = z - 8;
+            mesha.position.z = z;
+            mesha.position.y = y / 2 - 0.5;
+            meshb.position.z = z - 8;
+            meshb.position.y = y / 2 - 0.5;
+
+            // mesh.rotation.y = Math.PI / 2;
+            // mesh2.rotation.y = Math.PI/2;
+            scene.add(meshb);
+            scene.add(mesha);
+            scene.add(mesh2);
+            scene.add(mesh);
+        }
+        //function to create type A bars on the roof
+        function topbara(Color, x, y, z, theta) {
+            const loader = new THREE.TextureLoader();
+            const texture = loader.load('Tex.jpeg');
+            texture.rotation = 1.57;
+            const width = 1.75;
+            const height = 1;
+            const depth = 1;
+            const geometry = new THREE.BoxGeometry(width, height, depth);
+            const material = new THREE.MeshLambertMaterial({
+                side: THREE.DoubleSide,
+                map: texture,
+            });
+            material.color.setHex(Color)
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.x = x;
+            mesh.position.y = y;
+            mesh.position.z = z;
+            mesh.rotation.y = theta;
+            const mesh2 = mesh.clone();
+            mesh2.position.z = z - z - z;
+            scene.add(mesh2)
+            scene.add(mesh);
+        }
+        //function to create type B bars on the roof
+        function topbarb(Color, x, y, z, theta) {
+            const loader = new THREE.TextureLoader();
+            const texture = loader.load('Tex.jpeg');
+            texture.rotation = 1.57;
+            const width = 7;
+            const height = 1;
+            const depth = 1;
+            const geometry = new THREE.BoxGeometry(width, height, depth);
+            const material = new THREE.MeshLambertMaterial({
+                side: THREE.DoubleSide,
+                map: texture,
+            });
+            material.color.setHex(Color)
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.x = x;
+            mesh.position.y = y;
+            mesh.position.z = z;
+            const mesh2 = mesh.clone();
+            mesh2.position.z = z - z - z;
+            scene.add(mesh2)
+            scene.add(mesh);
+        }
+        //function to create type C bars on the roof
+        function topbarc(Color, x, y, z, theta) {
+            const loader = new THREE.TextureLoader();
+            const texture = loader.load('Tex.jpeg');
+            texture.rotation = 1.57;
+            const width = 1.75;
+            const height = 1;
+            const depth = 1;
+            const geometry = new THREE.BoxGeometry(width, height, depth);
+            const material = new THREE.MeshLambertMaterial({
+                side: THREE.DoubleSide,
+                map: texture,
+            });
+            material.color.setHex(Color)
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.x = x;
+            mesh.position.y = y;
+            mesh.position.z = z;
+            mesh.rotation.y = theta;
+            const mesh2 = mesh.clone();
+            mesh2.position.x = x - x - x;
+            scene.add(mesh2)
+            scene.add(mesh);
+        }
+        // function to create rotated side bars
+        function greybar(color, x, y, z, theta) {
+            const width = 7;
+            const height = 1;
+            const depth = 1;
+            const geometry = new THREE.BoxGeometry(width, height, depth);
+            const material = new THREE.MeshLambertMaterial({
+                side: THREE.DoubleSide,
+            });
+            material.color.setHex(color)
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.x = x;
+            mesh.position.y = y;
+            mesh.position.z = z;
+            mesh.rotation.y = theta;
+            const mesh2 = mesh.clone();
+            mesh2.position.x = x - x - x;
+            mesh2.position.z = z - z - z;
+            scene.add(mesh2);
+            scene.add(mesh);
+        }
+        //ceiling
+        {
+            const width = 8;
+            const height = 0.1;
+            const depth = 8;
+            const geometry = new THREE.BoxGeometry(width, depth, height);
+            const material = new THREE.MeshLambertMaterial({
+                side: THREE.DoubleSide,
+            });
+            material.color.setHex(0xaaaaaa)
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.x = 0;
+            mesh.position.y = 5.01;
+            mesh.position.z = 0;
+            mesh.rotation.x = Math.PI / 2;
+            scene.add(mesh);
+        }
+        // floor
+        {
+            const width = 25;
+            const height = 0.2;
+            const depth = 25;
+            const geometry = new THREE.PlaneGeometry(width, depth);
+            const material = new THREE.MeshLambertMaterial({
+                side: THREE.DoubleSide,
+            });
+            material.color.setHex(0xffffff)
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.x = 0;
+            mesh.position.y = -5.01;
+            mesh.position.z = 0;
+            mesh.rotation.x = Math.PI / 2;
+            scene.add(mesh);
+        }
+        //function to create the walls
+        function waller(colorval, x, y, z, theta2) {
+            const width = 7;
+            const height = 0;
+            const depth = 5.25;
+            const geometry = new THREE.PlaneGeometry(width, depth);
+            const material = new THREE.MeshLambertMaterial({
+                side: THREE.DoubleSide
+
+            });
+
+            material.color.setHex(colorval)
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.x = x;
+            mesh.position.y = y;
+            mesh.position.z = z;
+            // mesh.rotation.x = Math.PI / 2;
+            mesh.rotation.y = theta2;
+            scene.add(mesh);
+        }
+        // separate for the red wall
+        const materialw = new THREE.MeshLambertMaterial({
+            side: THREE.DoubleSide
+        })
+        materialw.color.setHex(0xff0000);
+        // function to create the leftwall
+        function leftwall(materialw, x, y, z, theta2) {
+            const width = 7;
+            const height = 0;
+            const depth = 5.25;
+            const geometryw = new THREE.PlaneGeometry(width, depth);
+            const mesh = new THREE.Mesh(geometryw, materialw);
+            mesh.position.x = x;
+            mesh.position.y = y;
+            mesh.position.z = z;
+            mesh.rotation.x = Math.PI;
+            mesh.rotation.z = theta2;
+            scene.add(mesh);
+        }
+        // function to add tablelegs
+        function addlegs(x, y, z) {
+            const geometry = new THREE.CylinderGeometry(0.2, 0.2, 2, 32);
+            const material = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
+            const legs = new THREE.Mesh(geometry, material);
+            legs.position.x = x
+            legs.position.z = z
+            legs.position.y = y
+
+            scene.add(legs);
+        }
+        //tabletop
+        {
+            const width = 5;
+            const height = 0.2;
+            const depth = 4;
+            const geometry = new THREE.BoxGeometry(width, depth, height);
+            const material = new THREE.MeshLambertMaterial({
+                side: THREE.DoubleSide,
+            });
+            material.color.setHex(0xeeeeee)
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.x = 0;
+            mesh.position.y = -3;
+            mesh.position.z = 0;
+            mesh.rotation.x = Math.PI / 2;
+            mesh.rotation.z = Math.PI / 2;
+            scene.add(mesh);
+        }
+        // cone
+
+        const conegeometry = new THREE.ConeGeometry(0.3, 1, 32);
+        const conematerial = new THREE.MeshLambertMaterial({
+            color: 0xffff00,
+            transparent: true,
+            opacity: 1,
+            map: null,
+            envMap: null,
+            wireframe:false,
+            reflectivity:1.0,
+        });
+        const cone = new THREE.Mesh(conegeometry, conematerial);
+        cone.position.x = -1;
+        cone.position.y = -2.5;
+        cone.position.z = 2;
+        scene.add(cone);
+
+        //cylinder
+
+        const cylgeometry = new THREE.CylinderGeometry(0.3, 0.3, 1, 32);
+        const cylmaterial = new THREE.MeshPhongMaterial({
+            color: 0xffff00,
+            transparent: true,
+            opacity: 1,
+            specular: 0xaaaaaa,
+            shininess: 10,
+            map: null,
+            envMap: null,
+            specularMap: null,
+            wireframe:false,
+        });
+        const cylinder = new THREE.Mesh(cylgeometry, cylmaterial);
+        cylinder.position.x = -1;
+        cylinder.position.y = -2.5;
+        cylinder.position.z = -2;
+
+        scene.add(cylinder);
+
+        //sphere
+
+        const spgeometry = new THREE.SphereGeometry(0.3, 32, 32);
+        const spmaterial = new THREE.MeshPhysicalMaterial({
+            color: 0xffff00,
+            transparent: true,
+            opacity: 1,
+            roughness: 1,
+            map: null,
+            envMap: null,
+            roughnessMap: null,
+            wireframe:false,
+
+        });
+        const sphere = new THREE.Mesh(spgeometry, spmaterial);
+        sphere.position.x = 0;
+        sphere.position.y = -2.6;
+        sphere.position.z = 0;
+        scene.add(sphere);
+
+        // GUI
+        {
+            const AmbientlightProperties = {
+                Ambient_Light_color: light1.color,
+                Ambient_Light_intensity: light1.intensity
+            }
+            const PointlightProperties = {
+                Point_Light_color: light2.color,
+                Point_Light_intensity: light2.intensity
+            }
+            const Sphere_prop = {
+                Transparent: spmaterial.transparent,
+                Opacity: spmaterial.opacity,
+                Color: spmaterial.color,
+                Wireframe: spmaterial.wireframe,
+                roughness: spmaterial.roughness,
+                texture: spmaterial.map,
+                EnvMap: spmaterial.envMap,
+                roughnessMap: spmaterial.roughnessMap,
+            }
+            const cone_prop = {
+                Transparent: conematerial.transparent,
+                Opacity: conematerial.opacity,
+                Color: conematerial.color,
+                texture: conematerial.map,
+                EnvMap: conematerial.envMap,
+                Wireframe:conematerial.wireframe,
+            }
+            const Cyl_prop = {
+                Transparent: cylmaterial.transparent,
+                Opacity: cylmaterial.opacity,
+                Color: cylmaterial.color,
+                Wireframe: cylmaterial.wireframe,
+                speculiar: cylmaterial.specular,
+                shinines: cylmaterial.shininess,
+                map: cylmaterial.map,
+                envMap: cylmaterial.envMap,
+                specularMap: cylmaterial.specularMap,
+            }
+
+
+
+            var gui = new GUI();
+
+            const Sphere = gui.addFolder('Sphere')
+            Sphere.add(Sphere_prop, "Transparent", true).onChange(function (value) { spmaterial.transparent = value });
+            Sphere.add(Sphere_prop, "Opacity", 0, 1).onChange(function (value) { spmaterial.opacity = value });
+            Sphere.addColor(Sphere_prop, "Color");
+            Sphere.add(Sphere_prop, "roughness", 0, 1).onChange(function (value) { spmaterial.roughness = value });
+            Sphere.add(Sphere_prop, "texture", [null]).onChange(function (value) { spmaterial.map = value });
+            Sphere.add(Sphere_prop, "EnvMap", [null]).onChange(function (value) { spmaterial.EnvMap = value });
+            Sphere.add(Sphere_prop, "roughnessMap", [null]).onChange(function (value) { spmaterial.roughnessMap = value });
+            Sphere.close();
+
+
+            const Cyl = gui.addFolder('Cylinder')
+            Cyl.add(Cyl_prop, "Transparent", true).onChange(function (value) { cylmaterial.transparent = value });
+            Cyl.add(Cyl_prop, "Opacity", 0, 1).onChange(function (value) { cylmaterial.opacity = value });
+            Cyl.addColor(Cyl_prop, "Color");
+            Cyl.addColor(Cyl_prop, "speculiar");
+            Cyl.add(Cyl_prop, "shinines", 0, 50).onChange(function (value) { cylmaterial.shininess = value });
+            Cyl.add(Cyl_prop, "texture", [null]).onChange(function (value) { cylmaterial.map = value });
+            Cyl.add(Cyl_prop, "EnvMap", [null]).onChange(function (value) { cylmaterial.EnvMap = value });
+            Cyl.add(Cyl_prop, "specularMap", [null]).onChange(function (value) { cylmaterial.specularMap = value });
+            Cyl.close();
+
+            const cone = gui.addFolder('cone')
+            cone.add(cone_prop, "Transparent", true).onChange(function (value) { conematerial.transparent = value });
+            cone.add(cone_prop, "Opacity", 0, 1).onChange(function (value) { conematerial.opacity = value });
+            cone.addColor(cone_prop, "Color");
+            cone.add(cone_prop, "texture", [null]).onChange(function (value) { conematerial.map = value });
+            cone.add(cone_prop, "EnvMap", [null]).onChange(function (value) { conematerial.EnvMap = value });
+            cone.close();
+
+            //AmbientLightfolder
+            const Ambient_lightProperties = gui.addFolder('Ambient light')
+            Ambient_lightProperties.addColor(AmbientlightProperties, "Ambient_Light_color").onChange(function (value) {
+                light1.color.setHex(value);
+            });
+            Ambient_lightProperties.add(AmbientlightProperties, "Ambient_Light_intensity", 0, 1).onChange(function (value) {
+                light1.intensity = value;
+            });
+            Ambient_lightProperties.close();
+            //pointlightfolder
+            const Point_lightProperties = gui.addFolder('Point light')
+            Point_lightProperties.addColor(PointlightProperties, "Point_Light_color").onChange(function (value) {
+                light2.color.setHex(value);
+            });
+            Point_lightProperties.add(PointlightProperties, "Point_Light_intensity", 0, 1).onChange(function (value) {
+                light2.intensity = value;
+            });
+            Point_lightProperties.close();
+
+
+        }
+
+
+        createpillars(0xffffff, -4, 0, -4)
+        createpillars(0xffffff, 4, 0, -4)
+        createpillars(0xffffff, -4, 0, 4)
+        createpillars(0xffffff, 4, 0, 4)
+
+        createsidepannels(0xb3f026, 0, 3.125, -4)
+        createsidepannels(0xb3f026, 0, 3.125, 4)
+        createsidepannelsrot(0xb3f026, -4, 3.125, 0)
+        createsidepannelsrot(0xb3f026, 4, 3.125, 0)
+
+        createsidebars(0xffffff, 4, 4.5, 0)
+        createsidebarsrot(0xffffff, 0, 4.5, 4)
+
+        greybar(0x999999, 4, 0.75, 0, Math.PI / 2)
+        greybar(0x999999, 0, 0.75, 4, 0)
+
+        topbara(0xffffff, 0, 4.5, 2.65, Math.PI / 2)
+        topbarb(0xffffff, 0, 4.5, 1.285, 0)
+        topbarc(0xffffff, 1.285, 4.5, 0, Math.PI / 2)
+
+        leftwall(materialw, 0, -2.375, 4, 0)
+        waller(0x00ff00, 0, -2.375, -4, 0)
+        waller(0xffffff, -4, -2.375, 0, Math.PI / 2)
+
+        addlegs(-1.5, -4, -1.5)
+        addlegs(-1.5, -4, 1.5)
+        addlegs(1.5, -4, -1.5)
+        addlegs(1.5, -4, 1.5)
+
+
+        console.log(scene);
+
+        function resizeRendererToDisplaySize(renderer) {
+            const canvas = renderer.domElement;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            const needResize = canvas.width !== width || canvas.height !== height;
+            if (needResize) {
+                renderer.setSize(width, height, false);
+            }
+            return needResize;
+        }
+
+        function render() {
+
+
+            if (resizeRendererToDisplaySize(renderer)) {
+                const canvas = renderer.domElement;
+                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                camera.updateProjectionMatrix();
+            }
+            renderer.render(scene, camera);
+
+            requestAnimationFrame(render);
+        }
+
+        requestAnimationFrame(render);
+    }
+
+    main();
+</script>
+
+</html>
